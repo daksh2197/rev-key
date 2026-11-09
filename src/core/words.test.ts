@@ -91,7 +91,7 @@ describe('words', () => {
   });
 
   it('describes seen and predicted shifts', () => {
-    expect(shiftLine({ kind: 'seen', t: 0, inMs: 0, fromRpm: 5800 })).toMatch(/landed/);
+    expect(shiftLine({ kind: 'seen', t: 0, inMs: 0, fromRpm: 5800 })).toMatch(/Shift seen/);
     expect(shiftLine({ kind: 'predicted', t: 0, inMs: 240, fromRpm: 5800 })).toMatch(/240 ms/);
   });
 });

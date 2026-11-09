@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Rev Key</title>
+    <meta
+      name="description"
+      content="The song tunes itself to your engine. Rev Key reads the engine's firing note from RPM, shifts the music so the drone becomes the song's root, mixes two lanes by how you drive, and lands the drop on the gear change. Runs in the browser; reads a real car over Bluetooth OBD-II."
+    />
+    <meta name="theme-color" content="#111214" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icon-192.png" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Rev Key" />
+    <meta property="og:description" content="The song tunes itself to your engine: the key locks to the engine's firing note, the mix follows how you drive, the drop lands on the gear change." />
+    <meta property="og:image" content="%SITE_URL%/og.png" />
+    <meta property="og:url" content="%SITE_URL%/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="module" src="/src/main.ts"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to the app</a>
+
+    <header class="site-head" data-chrome>
+      <a class="brand" href="https://dakshdua.ca" aria-label="Daksh Dua, dakshdua.ca">
+        <span class="brand-tile" aria-hidden="true">DD</span>
+        <span>Daksh Dua</span>
+      </a>
+      <h1 class="app-name">Rev Key</h1>
+      <nav class="head-links" aria-label="About this project">
+        <a href="%REPO_URL%">Source</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <p class="lede" data-chrome>
+        The song tunes itself to your engine. Hold the revs steady and the music moves its key so the engine's drone becomes the bass note. Push on the highway and the beat comes up. Drive hard in town and it backs off.
+      </p>
+
+      <section class="rig" aria-labelledby="h-rig">
+        <h2 id="h-rig" class="vh">The meter</h2>
+        <div class="tach" id="tach"></div>
+
+        <div class="deck">
+          <div class="bar">
+            <button type="button" id="btn-start" class="btn primary">Start engine and music</button>
+            <button type="button" id="btn-revkey" class="btn" aria-pressed="true">Rev Key on</button>
+          </div>
+
+          <dl class="readouts">
+            <div><dt>Firing note</dt><dd id="r-hz">0.0 Hz</dd></div>
+            <div><dt>Engine plays</dt><dd id="r-note">—</dd></div>
+            <div><dt>Song key</dt><dd id="r-key">A minor</dd></div>
+            <div><dt>Key shift</dt><dd id="r-shift">0 st</dd></div>
+          </dl>
+
+          <div class="lanes" aria-hidden="true">
+            <div class="lane-bar"><i id="lane-dot"></i></div>
+            <div class="lane-labels"><span>Calm lane</span><span>Pump lane</span></div>
+          </div>
+
+          <p class="status" id="status-lock" role="status" aria-live="polite"></p>
+          <p class="status status-2" id="status-lane" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <section class="sources" aria-labelledby="h-sources">
+        <h2 id="h-sources" class="section-title">Where the revs come from</h2>
+        <div class="tabs" role="tablist" aria-label="Rev source">
+          <button type="button" role="tab" id="tab-sim" aria-controls="panel-sim" aria-selected="true" class="tab">Drive it here</button>
+          <button type="button" role="tab" id="tab-replay" aria-controls="panel-replay" aria-selected="false" class="tab" tabindex="-1">Replay a log</button>
+          <button type="button" role="tab" id="tab-live" aria-controls="panel-live" aria-selected="false" class="tab" tabindex="-1">Live car</button>
+        </div>
+
+        <div id="panel-sim" role="tabpanel" aria-labelledby="tab-sim" class="panel">
+          <div class="bar">
+            <button type="button" id="btn-auto" class="btn" aria-pressed="false">Auto drive</button>
+            <span class="pedal-note" id="pedal-note">Plug in a USB wheel or gamepad and press the pedal: it drives this car.</span>
+          </div>
+          <label class="field range" for="rpm">
+            <span>Engine speed <output id="rpm-out" for="rpm">800 rpm</output></span>
+            <input id="rpm" type="range" min="0" max="8000" step="10" value="800" />
+          </label>
+          <label class="field range" for="thr">
+            <span>Throttle <output id="thr-out" for="thr">0%</output></span>
+            <input id="thr" type="range" min="0" max="100" step="1" value="0" />
+          </label>
+        </div>
+
+        <div id="panel-replay" role="tabpanel" aria-labelledby="tab-replay" class="panel" hidden>
+          <p class="note" id="replay-hint"></p>
+          <div class="bar">
+            <label class="btn file-btn" for="log-file">Open a log file<input id="log-file" type="file" accept=".json,.csv,application/json,text/csv" /></label>
+            <button type="button" id="btn-demo-log" class="btn">Play the invented demo drive</button>
+          </div>
+          <div class="transport" id="transport" hidden>
+            <button type="button" id="btn-play" class="btn" aria-pressed="false">Play</button>
+            <label class="field range grow" for="seek">
+              <span><span id="replay-label">drive</span> <output id="seek-out" for="seek">0:00 / 0:00</output></span>
+              <input id="seek" type="range" min="0" max="100" step="0.1" value="0" />
+            </label>
+          </div>
+          <p class="note" id="replay-msg" role="status" aria-live="polite"></p>
+        </div>
+
+        <div id="panel-live" role="tabpanel" aria-labelledby="tab-live" class="panel" hidden>
+          <p class="note">
+            An ELM327-type Bluetooth LE adapter in the car's OBD-II port, read only: engine speed, throttle and vehicle speed, several times a second. Nothing is ever written to the car. Set up parked.
+          </p>
+          <div class="bar">
+            <button type="button" id="btn-connect" class="btn primary">Connect to the adapter</button>
+            <button type="button" id="btn-disconnect" class="btn" hidden>Disconnect</button>
+          </div>
+          <p class="note" id="live-status" role="status" aria-live="polite">Not connected.</p>
+        </div>
+      </section>
+
+      <section class="settings" aria-labelledby="h-settings">
+        <h2 id="h-settings" class="section-title">Settings</h2>
+        <div class="grid">
+          <label class="field" for="engine">
+            <span>Engine</span>
+            <select id="engine"></select>
+          </label>
+          <label class="field" for="place">
+            <span>Where you are driving</span>
+            <select id="place">
+              <option value="highway">Highway</option>
+              <option value="city">City</option>
+            </select>
+          </label>
+          <label class="field" for="limit">
+            <span>Posted limit, km/h (blank for none)</span>
+            <input id="limit" type="number" inputmode="numeric" min="10" max="200" step="10" placeholder="110" />
+          </label>
+          <label class="field range" for="delay">
+            <span>Speaker delay <output id="delay-out" for="delay">0 ms</output></span>
+            <input id="delay" type="range" min="0" max="500" step="10" value="0" />
+            <small id="delay-note" class="note"></small>
+          </label>
+          <label class="field range" for="cab">
+            <span>Engine in cabin <output id="cab-out" for="cab">45%</output></span>
+            <input id="cab" type="range" min="0" max="100" step="1" value="45" />
+          </label>
+          <label class="field range" for="cap">
+            <span>Volume cap <output id="cap-out" for="cap">70%</output></span>
+            <input id="cap" type="range" min="0" max="100" step="1" value="70" />
+          </label>
+        </div>
+        <p class="note" id="safety"></p>
+      </section>
+
+      <section class="how" aria-labelledby="h-how" data-chrome>
+        <h2 id="h-how" class="section-title">What it is doing</h2>
+        <ol class="steps">
+          <li><b>Firing note.</b> A four-stroke engine fires cylinders ÷ 2 times per revolution. At 2,200 rpm a V6 makes 110 Hz: an A.</li>
+          <li><b>Key lock.</b> When the revs hold steady for a second, the song moves by the smallest shift (two semitones at most) that puts its root or fifth on that note.</li>
+          <li><b>Lanes.</b> Revs and throttle open the pump lane on the highway. Hard driving in town, or over the limit anywhere, closes it and lowers the volume.</li>
+          <li><b>Shift drop.</b> It learns where you shift and books the drop ahead of time, so it reaches the speaker on the gear change instead of after it.</li>
+        </ol>
+        <p class="note">The two beats are placeholders written for this demo, not released tracks. No account, no server, no tracking: everything runs on this page.</p>
+      </section>
+    </main>
+
+    <footer class="site-foot" data-chrome>
+      <p>
+        Rev Key reads from the car and never writes to it. Not affiliated with any car maker, adapter maker or music service.
+        Built in Calgary by <a href="https://dakshdua.ca">Daksh Dua</a>. MIT licence.
+      </p>
+    </footer>
+  </body>
+</html>

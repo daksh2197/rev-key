@@ -54,7 +54,7 @@ export function laneLine(lane: LaneOutput): string {
 export function shiftLine(event: ShiftEvent): string {
   return event.kind === 'predicted'
     ? `Shift coming in about ${event.inMs} ms. Drop scheduled so it lands on the gear change.`
-    : 'Shift. Drop landed on the gear change.';
+    : 'Shift seen. Drop on the next eighth note. Set a speaker delay and it will be foreseen instead.';
 }
 
 export const SOURCE_NAMES = {

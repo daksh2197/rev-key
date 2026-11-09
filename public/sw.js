@@ -1,6 +1,6 @@
 /*
  * The service worker: a small script the browser keeps on the phone for this site.
- * Its one job is to save a copy of the app so the dashboard opens with no signal,
+ * Its one job is to save a copy of the app so the app opens with no signal,
  * which is exactly where a car is parked (a garage, a parking lot, a road with no coverage).
  *
  * VERSION and FILES are filled in by scripts/stamp-sw.mjs at build time.
@@ -9,7 +9,7 @@
  */
 
 const VERSION = '__VERSION__';
-const CACHE = `open-gauge-${VERSION}`;
+const CACHE = `rev-key-${VERSION}`;
 const FILES = ['__FILES__'];
 
 // First visit: save every file the app needs.
@@ -32,7 +32,7 @@ self.addEventListener('activate', (event) => {
       .then((names) =>
         Promise.all(
           names
-            .filter((name) => name.startsWith('open-gauge-') && name !== CACHE)
+            .filter((name) => name.startsWith('rev-key-') && name !== CACHE)
             .map((name) => caches.delete(name)),
         ),
       )
