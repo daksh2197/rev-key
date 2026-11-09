@@ -75,8 +75,9 @@ describe('words', () => {
     expect(lockLine({ ...INITIAL_LOCK, phase: 'locked', target: 'root', shift: 0, lockedRpm: 2200 }, note)).toMatch(/root/);
   });
 
-  it('counts the steady time while waiting', () => {
+  it('counts the steady time while waiting, once it is worth counting', () => {
     expect(lockLine({ ...INITIAL_LOCK, phase: 'waiting', steadyMs: 640 }, engineNote(2200))).toMatch(/0\.6s/);
+    expect(lockLine({ ...INITIAL_LOCK, phase: 'waiting', steadyMs: 120 }, engineNote(2200))).toMatch(/Revs moving/);
   });
 
   it('has a sentence for every lane reason', () => {

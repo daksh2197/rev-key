@@ -491,13 +491,14 @@ function main(): void {
     setText(rShift, fmt.semitones(lockState.shift));
     laneDot.style.left = `calc(${(pumpMix * 100).toFixed(1)}% - 2px)`;
 
-    if (rig.running) {
-      setText(statusLock, words.lockLine(lockState, note));
-      statusLock.dataset.tone = lockState.phase === 'locked' ? 'go' : '';
-      const laneText = now < shiftNoteUntil ? shiftNote : words.laneLine(lane);
-      setText(statusLane, laneText);
-      statusLane.dataset.tone = lane.counterSteer ? 'warn' : now < shiftNoteUntil ? 'go' : '';
-    }
+    // The lock and the lanes are visible without sound, so the lines update as soon as the revs
+    // move. Until then, the first line tells a new visitor what to do.
+    const moving = rig.running || lockState.phase !== 'idle' || source !== 'sim';
+    setText(statusLock, moving ? words.lockLine(lockState, note) : words.START_HINT);
+    statusLock.dataset.tone = lockState.phase === 'locked' ? 'go' : '';
+    const laneText = now < shiftNoteUntil ? shiftNote : words.laneLine(lane);
+    setText(statusLane, moving ? laneText : '');
+    statusLane.dataset.tone = lane.counterSteer ? 'warn' : now < shiftNoteUntil ? 'go' : '';
 
     requestAnimationFrame(frame);
   };

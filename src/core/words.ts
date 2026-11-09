@@ -26,8 +26,8 @@ export function lockLine(lock: KeyLockState, note: EngineNote): string {
     case 'idle':
       return 'Idling. The lock waits for revs above 1,200.';
     case 'waiting':
-      return lock.steadyMs > 0
-        ? `Steadying: ${Math.round(lock.steadyMs / 100) / 10}s of the second the lock needs.`
+      return lock.steadyMs >= 300
+        ? `Steadying: ${(Math.round(lock.steadyMs / 100) / 10).toFixed(1)}s of the second the lock needs.`
         : 'Revs moving. Hold them steady for a second to lock the key.';
     case 'out-of-reach':
       return `Steady on ${note.name}, but the nearest root or fifth is more than two semitones away. The song keeps its key.`;
