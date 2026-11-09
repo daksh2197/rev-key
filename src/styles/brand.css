@@ -1,0 +1,38 @@
+/*
+ * Night pit-lane: the dakshdua.ca palette.
+ *
+ * This file is the brand. Every app I ship starts by copying it unchanged,
+ * so a colour only ever has to be fixed in one place per repo.
+ * Change a value here and the whole app follows.
+ */
+
+:root {
+  /* Surfaces */
+  --ground: #111214; /* asphalt at night: the page */
+  --panel: #1a1c20; /* carbon panel: raised surfaces */
+  --panel-2: #22252a; /* one step lighter: inputs, chips */
+  --line: rgba(237, 232, 221, 0.12); /* quiet dividers */
+  --line-2: rgba(237, 232, 221, 0.22); /* borders you should notice */
+
+  /* Ink */
+  --chalk: #ede8dd; /* main text */
+  --muted: #a9a498; /* secondary text, 7.5:1 on ground */
+
+  /* Signals */
+  --signal: #ff5a1f; /* race orange: the brand, and the redline */
+  --signal-ink: #120a05; /* text on top of orange */
+  --go: #3ddc84; /* green flag: good news */
+  --purple: #b794ff; /* fastest-sector purple: use once per page, or not at all */
+
+  /* Shape */
+  --radius-s: 8px;
+  --radius-m: 14px;
+  --radius-l: 22px;
+
+  /* Type */
+  --display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --body: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  color-scheme: dark;
+}

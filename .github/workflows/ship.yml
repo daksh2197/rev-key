@@ -1,0 +1,79 @@
+# Every push to main and every pull request runs this file on a fresh computer in GitHub's cloud.
+#
+#   1. test    - install, run the tests, build the app
+#   2. deploy  - only on the main branch, and only if step 1 passed: put the build on the internet
+#
+# If a test fails, nothing ships. That is the whole point.
+#
+# While the repo is private, only the tests and the build run. The deploy steps are skipped.
+# The day the repo goes public, set Settings > Pages > Source to "GitHub Actions" and
+# run this workflow once from the Actions tab. From then on every push to main deploys.
+
+name: Test and ship
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# If two pushes land close together, only the newest one needs to finish.
+concurrency:
+  group: ship-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test and build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install exactly what package-lock.json says
+        run: npm ci
+
+      - name: Run the tests
+        run: npm test
+
+      - name: Ask GitHub where this site will live
+        id: pages
+        if: github.ref == 'refs/heads/main' && !github.event.repository.private
+        uses: actions/configure-pages@v6
+
+      - name: Build
+        run: npm run build
+        env:
+          SITE_URL: ${{ steps.pages.outputs.base_url }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+
+      - name: Hand the build to the deploy job
+        if: github.ref == 'refs/heads/main' && !github.event.repository.private
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    name: Put it on the internet
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && !github.event.repository.private
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

@@ -1,0 +1,38 @@
+{
+  "name": "rev-key",
+  "version": "1.0.0",
+  "description": "The song tunes itself to your engine: the key locks to the engine's firing note from RPM, the mix follows how you drive, and the drop lands on the gear change.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "author": "Daksh Dua (https://dakshdua.ca)",
+  "homepage": "https://daksh2197.github.io/rev-key",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/daksh2197/rev-key"
+  },
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build && node scripts/stamp-sw.mjs",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource-variable/geist": "^5.3.0",
+    "@fontsource-variable/geist-mono": "^5.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@types/web-bluetooth": "^0.0.22",
+    "fast-check": "^4.10.2",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0"
+  }
+}
