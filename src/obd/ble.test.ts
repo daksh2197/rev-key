@@ -242,7 +242,7 @@ describe('the Web Bluetooth transport with a pretend adapter', () => {
   });
   it('explains when the adapter has no serial-style service', async () => {
     pretendStack([new FakeChar('2a00', props(false, false))]);
-    await expect(connectBle()).rejects.toThrow(/Setup page/);
+    await expect(connectBle()).rejects.toThrow(/open an issue/);
   });
   it('reports a closed picker as cancelled', async () => {
     const requestDevice = vi.fn(() => Promise.reject(new DOMException('none', 'NotFoundError')));
