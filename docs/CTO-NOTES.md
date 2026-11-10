@@ -44,7 +44,7 @@ So the rig never plays a note when its timer fires. Every 25 ms it looks 120 ms 
 The same idea runs the shift drop. Sound takes time to reach a Bluetooth speaker. If you book the drop when you see the shift, it lands late. So the detector predicts the shift from the slope of the revs and books the drop early by the speaker's delay. Predicting the future to hide latency is how games, video calls and racing telemetry all work.
 
 - **See it:** [`src/core/patterns.ts`](../src/core/patterns.ts) (`stepsDue`), [`src/audio/rig.ts`](../src/audio/rig.ts) (`tick`), [`src/core/shift.ts`](../src/core/shift.ts) (`push`).
-- **Say it:** "Audio is scheduled 120 ms ahead on the audio clock, so a slow frame can't bend the beat. The drop is predicted from the RPM slope and booked early by the measured output delay."
+- **Say it:** "Audio is scheduled 120 ms ahead on the audio clock, so a slow frame can't bend the beat. The drop is predicted from the RPM slope and booked early by the speaker delay the driver set."
 
 ### Pure functions
 
@@ -113,15 +113,15 @@ Web Bluetooth, the Gamepad API and Web Audio are all built into the browser. The
 
 | What you see | Likely cause | Where to look | How to check |
 | --- | --- | --- | --- |
-| No sound after Start | The browser refused to start audio, or the tab is muted | The status line says so | Press Start again from a real click. Check the tab's mute icon. On iPhone, check the silent switch. |
+| No sound after Start | The browser refused to start audio, or the tab is muted | The first status line says so for four seconds | Press Start again from a real click. Check the tab's mute icon. On iPhone, check the silent switch. |
 | The note reads wrong for my car | Wrong cylinder count, or a two-stroke | Engine menu; `ENGINES` in `engine.ts` | Rev to 3,000 and compare: a four should read 100 Hz, a V6 150, a V8 200. Write the RPM and the expected Hz as a test in `engine.test.ts`. |
 | It never locks at cruise | The revs are wobbling more than 80 rpm, or cruise is under 1,200 rpm | `DEFAULT_LOCK` in `keylock.ts`; the "Steadying" line shows how far it got | Load the drive as a log and replay it. If the lock never engages, widen `steadyBandRpm` by 20 and see if the tests still agree. |
 | The song keeps its key and says out of reach | The drone sits between the root and the fifth | Normal: more than two semitones is a wrong-sounding song | Change `maxShift` to 3 to hear why the limit exists. |
 | The drop lands after the shift | Speaker delay not set, or set too low | Settings, Speaker delay | Raise it by 50 ms steps until the drop and the shift agree. If it then fires too early on slow pulls, lower `windowMs` in `shift.ts`. |
-| The beat stutters | Something heavier than this page is hogging the main thread | `LOOKAHEAD_S` in `rig.ts` | Raise it to 0.2. The cost is a slower response to the lock and the mix. |
+| The beat stutters | Something heavier than this page is hogging the main thread | `LOOKAHEAD_S` in `rig.ts` | Raise it to 0.2. The cost: notes are booked earlier, so a key shift or a drop reaches the speaker that much later. |
 | "No Web Bluetooth" | Safari, Firefox, or an iPhone | Browser | Chrome or Edge on Android, Windows, macOS or ChromeOS. |
 | The adapter won't answer | Wrong service UUID on a clone, or no power | `CANDIDATE_SERVICES` in `obd/ble.ts`; the status line | Check the adapter's light first. A clone with an unusual UUID needs it added to `CANDIDATE_SERVICES`; the list is the one Open Gauge uses. |
-| The wheel does nothing | Pedals not yet learned | The pedal note under the sliders says what to do | Press the throttle all the way once, then the brake once. |
+| The wheel does nothing | Pedals not yet learned, or the pedals sit on axes 0 or 1 | The pedal note under the sliders says what to do; `pedal.ts` skips axes 0 and 1 (steering) | Press the throttle all the way once, then the brake once. If nothing is learned, the wheel reports its pedals on the steering axes: open an issue with the wheel's name. |
 | Red X on a commit | A test or the build failed in CI | GitHub, Actions tab | The log names the failing test. Nothing was deployed. |
 
 **The one debugging habit that matters:** reproduce it as a test first. Record the drive as a log, load it into a test, assert what the lock or the detector should have done. A bug you can trigger with a test is a bug you can fix once and keep fixed.
@@ -132,7 +132,7 @@ Five real changes, easiest first. Each one is a commit with your name on it. You
 
 1. **Change a sentence.** In `src/core/words.ts`, reword the counter-steer line in your own voice. *Done when:* `npm test` still passes (one test only checks that every lane has a sentence) and the live site says it.
 2. **Add an engine.** In `src/core/engine.ts`, add a flat-six: `{ id: 'f6', name: 'Flat six, four-stroke', cylinders: 6, strokes: 4, idleRpm: 700, redlineRpm: 7500 }`. *Done when:* it appears in the Engine menu and the note ring redraws with the higher redline.
-3. **Change a rule.** Set `CITY_PUMP_CAP` in `lanes.ts` to `0.5` and push. *Done when:* CI goes red, because a test pins the cap. Read the log, then decide: change it back, or update the test and the two docs that state 35%. The red X is the safety net doing its job.
+3. **Change a rule.** Set `CITY_PUMP_CAP` in `lanes.ts` to `0.5` and push. *Done when:* CI goes red, because `lanes.test.ts` pins the cap to the number 0.35 on purpose. Read the log, then decide: change it back, or update the test and the line in `docs/THE-MATH.md` that states 35%. The red X is the safety net doing its job.
 4. **Write a test.** Hold a cruise in your own car, note the RPM, and add an `it(...)` to `keylock.test.ts` that feeds that RPM for 1.1 s and asserts the shift you expect. *Done when:* it passes, or it fails and you learn something about your engine.
 5. **Add a lane.** A third lane, "night", that takes over after a time you set. It touches every layer: a pattern in `patterns.ts`, a bus in `rig.ts`, a rule in `lanes.ts` (`pump` becomes a position across three lanes), and the bar in `index.html` and `app.css`. The build refuses to pass until every one of them agrees, which is the type checker being your checklist. Talk this one through with Claude; ask it to explain each change before you accept it.
 

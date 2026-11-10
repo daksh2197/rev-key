@@ -331,7 +331,7 @@ function main(): void {
     settings.engine = engineSel.value;
     settings.place = placeSel.value === 'city' ? 'city' : 'highway';
     const lim = Number(limitInput.value);
-    settings.limitKph = limitInput.value.trim() !== '' && Number.isFinite(lim) && lim > 0 ? Math.min(200, lim) : null;
+    settings.limitKph = limitInput.value.trim() !== '' && Number.isFinite(lim) && lim > 0 ? Math.min(200, Math.max(10, Math.round(lim))) : null;
     settings.delayMs = Number(delaySlider.value);
     settings.cabin = Number(cabSlider.value);
     settings.cap = Number(capSlider.value);
@@ -344,6 +344,11 @@ function main(): void {
   });
   placeSel.addEventListener('change', persist);
   limitInput.addEventListener('input', persist);
+  limitInput.addEventListener('change', () => {
+    persist();
+    // Show what was kept: a limit outside 10 to 200 km/h is clamped, junk is dropped.
+    limitInput.value = settings.limitKph === null ? '' : String(settings.limitKph);
+  });
   delaySlider.addEventListener('input', () => {
     persist();
     applyLead();
@@ -365,6 +370,8 @@ function main(): void {
     void rig.start().then((ok) => {
       if (!ok) {
         setText(statusLock, words.AUDIO_BLOCKED);
+        statusLock.dataset.tone = 'warn';
+        noticeUntil = performance.now() + 4000;
         return;
       }
       startBtn.textContent = 'Stop';
@@ -383,6 +390,8 @@ function main(): void {
   // ----- the frame -----
   let shiftNote = '';
   let shiftNoteUntil = 0;
+  /** A notice (like "the browser would not start sound") holds the first line until this time. */
+  let noticeUntil = 0;
 
   const frame = (now: number): void => {
     const dt = Math.min(0.25, Math.max(0, (now - lastFrame) / 1000));
@@ -494,8 +503,10 @@ function main(): void {
     // The lock and the lanes are visible without sound, so the lines update as soon as the revs
     // move. Until then, the first line tells a new visitor what to do.
     const moving = rig.running || lockState.phase !== 'idle' || source !== 'sim';
-    setText(statusLock, moving ? words.lockLine(lockState, note) : words.START_HINT);
-    statusLock.dataset.tone = lockState.phase === 'locked' ? 'go' : '';
+    if (now >= noticeUntil) {
+      setText(statusLock, moving ? words.lockLine(lockState, note) : words.START_HINT);
+      statusLock.dataset.tone = lockState.phase === 'locked' ? 'go' : '';
+    }
     const laneText = now < shiftNoteUntil ? shiftNote : words.laneLine(lane);
     setText(statusLane, moving ? laneText : '');
     statusLane.dataset.tone = lane.counterSteer ? 'warn' : now < shiftNoteUntil ? 'go' : '';

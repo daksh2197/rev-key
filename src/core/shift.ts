@@ -100,6 +100,9 @@ export class ShiftDetector {
   private lastEventAt = Number.NEGATIVE_INFINITY;
   /** True once a prediction fired for the current climb; cleared when the revs stop climbing. */
   private armed = true;
+  /** False from a seen fall until the revs climb again, so one long drop is learned once, not per sample. */
+  private canLearn = true;
+  private lastRpm = 0;
 
   constructor(private options: ShiftOptions = DEFAULT_SHIFT) {}
 
@@ -125,6 +128,8 @@ export class ShiftDetector {
     this.window = [];
     this.lastEventAt = Number.NEGATIVE_INFINITY;
     this.armed = true;
+    this.canLearn = true;
+    this.lastRpm = 0;
   }
 
   /** Feed one sample. Returns an event when one happens, else null. */
@@ -137,15 +142,19 @@ export class ShiftDetector {
 
     const coolingDown = t - this.lastEventAt < o.cooldownMs;
     const throttleOn = sample.throttlePct >= o.minThrottlePct;
+    if (sample.rpm > this.lastRpm + 1) this.canLearn = true; // the revs are climbing again
+    this.lastRpm = sample.rpm;
 
     // 1. A shift we can see: the highest RPM in the window minus the one we have now.
     let peak = sample.rpm;
     for (const s of this.window) if (s.rpm > peak) peak = s.rpm;
     if (throttleOn && peak - sample.rpm >= o.dropRpm) {
+      this.window = [sample];
+      if (!this.canLearn) return null; // still the same fall: already counted
       // Learn from every shift, even one whose drop was already played early by a prediction.
       this.remember(peak);
+      this.canLearn = false;
       this.armed = true;
-      this.window = [sample];
       if (coolingDown) return null;
       this.lastEventAt = t;
       return { kind: 'seen', t, inMs: 0, fromRpm: peak };

@@ -15,8 +15,6 @@ export default defineConfig({
   // Relative paths, so the same build works at <user>.github.io/rev-key/,
   // on a custom domain, or from any subfolder.
   base: './',
-  // The version number shown in exported files ("rev-key@1.0.0") comes from package.json.
-  define: { __APP_VERSION__: JSON.stringify(pkg.version ?? '0.0.0') },
   build: {
     target: 'es2022',
   },

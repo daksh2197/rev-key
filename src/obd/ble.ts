@@ -4,7 +4,7 @@
  * IMPORTANT: none of the service UUIDs below has been verified against a real adapter in this
  * build. There was no Bluetooth hardware where this was written. BLE ELM327 clones expose a
  * serial-style service that is NOT standardised; the list is the set of UUIDs commonly used by
- * BLE serial bridges. If your adapter uses another one, type it on the Setup page.
+ * BLE serial bridges. An adapter that uses another one needs it added to CANDIDATE_SERVICES.
  *
  * How it works: ask the browser for a device (the user picks it from the browser's own list),
  * connect, look through the services we are allowed to see, pick the first one that has a
@@ -175,7 +175,7 @@ export async function connectBle(customService?: string | null): Promise<Transpo
   if (!endpoint || !listenChar || !writeChar) {
     server.disconnect();
     throw new BleError(
-      'Connected, but no serial-style service was found. If you know the adapter\'s service UUID, enter it on the Setup page.',
+      'Connected, but no serial-style service was found. Rev Key does not know this adapter yet: open an issue on GitHub with its name and service UUID.',
     );
   }
   return new BleTransport(device, server, listenChar, writeChar);

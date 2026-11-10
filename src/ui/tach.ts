@@ -137,6 +137,7 @@ export function mountTach(host: HTMLElement, engine: EngineSpec): Tach {
   render(engine);
   const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let first = true;
+  let sweeping = false;
   let last: TachState | null = null;
 
   const apply = (state: TachState): void => {
@@ -154,15 +155,18 @@ export function mountTach(host: HTMLElement, engine: EngineSpec): Tach {
       last = state;
       if (first && !calm) {
         // The ignition sweep, once: needle to the stop and back, like a car waking up.
+        // Frames that arrive during the sweep only update `last`; the needle waits.
         first = false;
+        sweeping = true;
         host.style.setProperty('--needle', `${angleForRpm(RPM_MAX).toFixed(2)}deg`);
         window.setTimeout(() => {
+          sweeping = false;
           if (last) apply(last);
         }, 650);
         return;
       }
       first = false;
-      apply(state);
+      if (!sweeping) apply(state);
     },
     setEngine(e) {
       render(e);

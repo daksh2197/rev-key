@@ -150,6 +150,20 @@ describe('KeyLock', () => {
     expect(lock.current.shift).toBe(0);
   });
 
+  it('a wobble that carries the note a hair past the limit keeps the lock and the last shift', () => {
+    // 2,469 rpm on the V6 is note 47, exactly two semitones above A. A ±40 rpm wobble stays inside
+    // the 80 rpm steady band but swings the note between 1.7 and 2.3 semitones. Once locked, it stays locked.
+    const lock = new KeyLock();
+    hold(lock, 2469, 1100, 0, 40);
+    expect(lock.current.phase).toBe('locked');
+    let t = 1150;
+    for (let i = 0; i < 40; i++, t += 50) {
+      const st = lock.update({ t, rpm: 2469 + (i % 2 ? 40 : -40) });
+      expect(st.phase).toBe('locked');
+      expect(Math.abs(st.shift)).toBeGreaterThan(1.5);
+    }
+  });
+
   it('says out of reach when the drone is between the root and the fifth', () => {
     const lock = new KeyLock();
     hold(lock, rpmForMidi(48.5), 1100); // 3.5 above A, 3.5 below E

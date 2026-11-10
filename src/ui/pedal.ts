@@ -5,7 +5,9 @@
  * resting value at +1 on some and -1 on others. Rather than ship a table of wheels, this learns:
  * the first readings are "rest", the furthest the axis travels is "full", and the pedal that
  * moves first becomes the throttle. The second pedal to move becomes the brake. A gamepad's
- * right trigger works too; it is just another axis or an analogue button.
+ * right trigger works too; it is just another axis or an analogue button. The steering axis
+ * (axis 0, with axis 1 on some wheels) is never a candidate, so turning the wheel first does
+ * not make steering the throttle.
  *
  * Nothing in here knows about sound or cars. `pedalValue` in the core does the arithmetic.
  */
@@ -45,7 +47,11 @@ export class Pedals {
     if (!pad) return { connected: false, throttle: 0, brake: 0, name: '', learned: this.learnedCount() };
 
     const channels: { key: string; value: number }[] = [];
-    pad.axes.forEach((value, i) => channels.push({ key: `a${i}`, value }));
+    // Axes 0 and 1 are the steering wheel on a wheel and the left stick on a pad, in every
+    // mapping seen so far. They travel the full range too, so they are never offered as pedals.
+    pad.axes.forEach((value, i) => {
+      if (i >= 2) channels.push({ key: `a${i}`, value });
+    });
     pad.buttons.forEach((b, i) => {
       // Analogue buttons (triggers) read 0 at rest and 1 pressed; only those with travel count.
       if (typeof b.value === 'number' && b.value > 0.02) channels.push({ key: `b${i}`, value: b.value });

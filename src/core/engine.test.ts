@@ -110,6 +110,11 @@ describe('notes', () => {
     fc.assert(fc.property(fc.integer({ min: -1000, max: 1000 }), (d) => Math.abs(wrapSemitones(d)) <= 6));
   });
 
+  it('below the bottom of hearing there is no note name', () => {
+    expect(engineNote(100).name).toBe(''); // 5 Hz
+    expect(engineNote(400).name).toBe('D#0'); // 20 Hz
+  });
+
   it('a non-number has no name and zero cents', () => {
     expect(noteName(Number.NaN)).toBe('');
     expect(centsOff(Number.NaN)).toBe(0);

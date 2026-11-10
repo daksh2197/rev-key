@@ -23,6 +23,15 @@ describe('CarSim', () => {
     expect(car.state.speedKph).toBeGreaterThan(80);
   });
 
+  it('reaches fifth gear under full throttle, and under half throttle', () => {
+    for (const thr of [1, 0.5]) {
+      const car = new CarSim();
+      let maxGear = 1;
+      for (let i = 0; i < 90 * 30; i++) maxGear = Math.max(maxGear, car.step(1 / 30, thr).gear);
+      expect(maxGear).toBe(5);
+    }
+  });
+
   it('an upshift is a fall in rpm with the throttle still down (what the shift detector listens for)', () => {
     const car = new CarSim();
     let prev = car.state.rpm;

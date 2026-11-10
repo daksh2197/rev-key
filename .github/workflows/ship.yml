@@ -20,10 +20,11 @@ on:
 permissions:
   contents: read
 
-# If two pushes land close together, only the newest one needs to finish.
+# If two pushes land close together they queue; a deploy that has started is left to finish,
+# because cancelling one half-way can leave Pages pointing at nothing.
 concurrency:
   group: ship-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   test:

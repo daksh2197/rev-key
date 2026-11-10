@@ -26,8 +26,8 @@ export function lockLine(lock: KeyLockState, note: EngineNote): string {
     case 'idle':
       return 'Idling. The lock waits for revs above 1,200.';
     case 'waiting':
-      return lock.steadyMs >= 300
-        ? `Steadying: ${(Math.round(lock.steadyMs / 100) / 10).toFixed(1)}s of the second the lock needs.`
+      return lock.steadyMs >= 500
+        ? 'Steadying: half a second held. One more and the key locks.'
         : 'Revs moving. Hold them steady for a second to lock the key.';
     case 'out-of-reach':
       return `Steady on ${note.name}, but the nearest root or fifth is more than two semitones away. The song keeps its key.`;
@@ -54,7 +54,7 @@ export function laneLine(lane: LaneOutput): string {
 export function shiftLine(event: ShiftEvent): string {
   return event.kind === 'predicted'
     ? `Shift coming in about ${event.inMs} ms. Drop scheduled so it lands on the gear change.`
-    : 'Shift seen. Drop on the next eighth note. Set a speaker delay and it will be foreseen instead.';
+    : 'Shift seen. Drop on the next eighth note. If it lands late, raise the speaker delay.';
 }
 
 export const SOURCE_NAMES = {

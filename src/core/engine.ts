@@ -73,9 +73,12 @@ export function pitchClass(midi: number): number {
   return ((n % 12) + 12) % 12;
 }
 
-/** "D#1", "A2". The empty string for a non-number. */
+/** Below this there is no note to speak of; the screen shows nothing rather than "C-5". */
+export const LOWEST_HZ = 16;
+
+/** "D#1", "A2". The empty string for a non-number or anything below the bottom of hearing. */
 export function noteName(midi: number): string {
-  if (!finite(midi)) return '';
+  if (!finite(midi) || hzFromMidi(midi) < LOWEST_HZ) return '';
   const n = Math.round(midi);
   const name = NOTE_NAMES[pitchClass(n)] ?? 'C';
   return `${name}${Math.floor(n / 12) - 1}`;

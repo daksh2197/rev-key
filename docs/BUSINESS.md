@@ -10,7 +10,7 @@ People who drive a lot and care how the car sounds:
 
 - Commuters on long highway runs, where the drone is constant for an hour at a time.
 - Owners of modified cars, who already paid for the exhaust and want the music to get along with it.
-- Sim racers with a wheel on the desk, who get the same thing at home from a game's telemetry.
+- Sim racers with a wheel on the desk, if a game's telemetry is wired in later (the pedal input is there; the telemetry input is not yet).
 
 The moment it's for: cruise, when the engine note settles and the music either fits it or fights it.
 

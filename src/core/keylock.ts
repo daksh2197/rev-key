@@ -10,7 +10,8 @@
  *      the smaller shift is chosen, and a shift beyond `maxShift` semitones is refused: the song
  *      would sound wrong, so it stays in its own key and the screen says "out of reach".
  *   3. Sticky, then gone. Once locked, small wobbles (inside `releaseBandRpm` of the locked RPM)
- *      keep the lock. A real change in revs releases it, and the song glides back to its key.
+ *      keep the lock, even if they carry the note a hair past the shift limit. Only a real change
+ *      in revs releases it, and then the song glides back to its key.
  *
  * The lock is a pure function of its inputs: feed it samples, read the state. Nothing in here
  * touches audio or the screen, so every rule above is a unit test.
@@ -192,11 +193,13 @@ export class KeyLock {
 
     const prev = this.state;
     if (prev.phase === 'locked' && prev.lockedRpm !== null && Math.abs(rpm - prev.lockedRpm) <= o.releaseBandRpm) {
-      // Hold the lock through small wobble, but keep the shift exact for the note we hear now.
+      // Hold the lock through small wobble, keeping the shift exact for the note we hear now. If the
+      // wobble carries the note a hair past the limit, keep the last shift rather than let go: the
+      // only way out of a lock is the RPM band, so the song never jumps back and forth at the edge.
       const best = bestShift(note.midi, o);
       this.state = best
         ? { ...base, phase: 'locked', shift: best.shift, target: best.target, lockedRpm: prev.lockedRpm }
-        : { ...base, phase: 'out-of-reach', shift: 0, target: null, lockedRpm: null };
+        : { ...base, phase: 'locked', shift: prev.shift, target: prev.target, lockedRpm: prev.lockedRpm };
       return this.state;
     }
 

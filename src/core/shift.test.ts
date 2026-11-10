@@ -60,6 +60,14 @@ describe('seeing a shift', () => {
     expect(count).toBe(1);
   });
 
+  it('a long fall sampled at 60 Hz is learned once, from its true peak', () => {
+    const d = new ShiftDetector();
+    for (let t = 0; t <= 1000; t += 16) d.push({ t, rpm: 3000 + t * 2.8, throttlePct: 80 }); // climb to 5,800
+    for (let t = 1016; t <= 1400; t += 16) d.push({ t, rpm: 5800 - (t - 1000) * 5, throttlePct: 80 }); // fall to 3,800
+    expect(d.shiftsSeen).toBe(1);
+    expect(d.shiftRpm).toBeGreaterThan(5700); // the real peak, not a mid-fall value like 4,800
+  });
+
   it('learns where the driver shifts from the shifts it has seen', () => {
     const d = new ShiftDetector();
     expect(d.shiftRpm).toBe(DEFAULT_SHIFT.defaultShiftRpm);

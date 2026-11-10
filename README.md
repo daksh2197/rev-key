@@ -11,11 +11,11 @@
   <img src="docs/screenshots/demo.gif" width="340" alt="The rev counter climbing through two gear changes, then settling at cruise while the song's root marker slides onto the needle and the lock engages">
 </p>
 
-An engine at a steady speed is a note. A V6 at 2,200 rpm fires 110 times a second, which is an A. At highway cruise that note sits under every song you play for an hour, and most of the time it is a semitone off the bass line. You can hear the clash without knowing why. Rev Key fixes the why: it reads the revs, works out the note, and moves the song's key so the engine lands on the root.
+An engine at a steady speed is a note. A V6 at 2,200 rpm fires 110 times a second, which is an A. At highway cruise that note sits under every song you play for an hour, and more often than not it is a fraction off the bass line. You can hear the clash without knowing why. Rev Key fixes the clash: it reads the revs, works out the note, and moves the song's key so the engine lands on the root.
 
 ## Why I built it
 
-Cars have had music that gets louder when you accelerate for years. Factory systems do it, phone apps do it. None of them do the thing my ear kept asking for on the highway, which is to make the engine and the music agree on a key.
+Cars have had music that gets louder when you accelerate for years. Factory systems do it, phone apps do it. I have not found one that does the thing my ear kept asking for on the highway, which is to make the engine and the music agree on a key.
 
 I'm a car person with a V6 project car and an OBD-II adapter already plugged into it, so the numbers were sitting right there: engine speed, several times a second. The rest is music theory and a bit of scheduling. It started as a one-page demo with two sliders. This is the finished version: a tested core, three ways to feed it revs, and a counter in the middle that reads notes as well as thousands.
 
@@ -26,7 +26,7 @@ I'm a car person with a V6 project car and an OBD-II adapter already plugged int
 - **Mixes two lanes by how you drive.** A calm lane for cruising and a pump lane that opens with revs and throttle on the highway.
 - **Counter-steers.** Hard throttle or high revs in the city, or any speed over the posted limit, sends the mix back to the calm lane and lowers the volume. The volume cap is yours; nothing in the app can raise it.
 - **Lands the drop on the gear change.** It learns the RPM you shift at and, given the delay of your speaker, books the beat drop early enough to reach the speaker when the revs fall, not after.
-- **Takes revs from three places.** Sliders and an auto-drive script, the pedals of a USB racing wheel or gamepad, a recorded Open Gauge log replayed parked, or a live car over Bluetooth LE OBD-II (read only; Chrome or Edge on Android, Windows, macOS or ChromeOS).
+- **Takes revs from four places.** Sliders and an auto-drive script, the pedals of a USB racing wheel or gamepad, a recorded Open Gauge log replayed parked, or a live car over Bluetooth LE OBD-II (read only; Chrome or Edge on Android, Windows, macOS or ChromeOS).
 - **Keeps everything on the device.** No server, no account, no tracking. Settings live in the browser's local storage. Open it once and it is saved for use with no signal.
 
 ![Three states on a phone: locked at cruise with the marker on the needle, a highway pull with the pump lane open, and counter-steer in the city](docs/screenshots/three-states.png)
@@ -39,7 +39,7 @@ note        = 69 + 12 × log2(firing Hz / 440)    (MIDI number; 69 is A4)
 key shift   = smallest move, within ±2 semitones, that puts the song's root or fifth on that note
 ```
 
-A V6 at 2,200 rpm: 110 Hz, note 45, an A2. The demo song is in A minor, so the shift is 0. Drop to 2,150 rpm (what most cars actually settle at) and the engine is 0.4 semitones flat of A; the song follows it down 0.4 so the drone sits dead on the root. Cruise at 2,330 rpm and the engine is an A#; the song moves up one. Hold 2,620 rpm, a C, and the nearest root or fifth is three semitones away: out of reach, the song keeps its key and the screen says so.
+A V6 at 2,200 rpm: 110 Hz, note 45, an A2. The demo song is in A minor, so the shift is 0. Drop to 2,150 rpm (a common cruise speed) and the engine is 0.4 semitones flat of A; the song follows it down 0.4 so the drone sits dead on the root. Cruise at 2,330 rpm and the engine is an A#; the song moves up one. Hold 2,620 rpm, a C, and the nearest root or fifth is three semitones away: out of reach, the song keeps its key and the screen says so.
 
 The long version, with the lanes and the shift prediction, is in [docs/THE-MATH.md](docs/THE-MATH.md).
 
@@ -54,7 +54,7 @@ git clone https://github.com/daksh2197/rev-key.git
 cd rev-key
 npm install
 npm run dev     # the app, live-reloading, at http://localhost:5173
-npm test        # 447 tests, in about five seconds
+npm test        # 451 tests, in about five seconds
 npm run build   # the finished site, in dist/
 ```
 
@@ -84,7 +84,10 @@ src/
     patterns.ts     the two beats as data, and the look-ahead scheduler's one decision
     sim.ts          a small car with a five-speed automatic, the auto-drive script, pedal maths
     replay.ts       an Open Gauge log, replayed parked
+    log.ts, csv.ts  the log format and its CSV form (from Open Gauge)
+    demo.ts         the invented demo drive (from Open Gauge)
     words.ts        every sentence the app says
+    format.ts       numbers for the screen
     *.test.ts       the tests, next to the code they check
   obd/              the adapter: ELM327 commands, PIDs, Web Bluetooth, a scripted fake (from Open Gauge)
   audio/
@@ -106,6 +109,8 @@ Want the guided tour? [docs/CTO-NOTES.md](docs/CTO-NOTES.md) explains every idea
 - **A beat drop that landed late.** The first version played the drop the moment it saw the revs fall. By the time the sound came out of a Bluetooth speaker, the shift was a quarter of a second old. The fix is in `shift.ts`: it learns where you shift from the shifts it has seen, draws a line through the last third of a second of revs, and fires early when the line crosses that point inside the speaker's lead time. The test for it climbs from 3,000 to 6,000 rpm and checks the event comes about 250 ms before 5,800.
 - **A dial that labelled every note.** An octave is a doubling of RPM, so notes bunch up at low revs: between 800 and 1,600 rpm there are twelve of them. The first ring was a smear of letters on the left. Now a name is only written where there is eleven degrees of room since the last one.
 - **A page that would not fit a small phone.** At 320 pixels wide the page scrolled sideways by 18 pixels. The cause was the longest option in the engine menu, "Three cylinder, four-stroke", which set the menu's minimum width and pushed the whole grid out. A browser check at five widths caught it; the fix is three lines of CSS.
+- **A lock that flickered at the edge.** Cruise at 2,469 rpm on the V6 and the engine sits two semitones above A, right on the shift limit. A 40 rpm wobble swung the note from 1.7 to 2.3 semitones, and the first version locked, let go and locked again on every sample, so the song jumped nearly two semitones per frame. The outside review found it; now the only way out of a lock is a real change in revs, and a test holds that wobble for forty samples.
+- **A detector that learned from the middle of a fall.** One gear change sampled at 60 Hz was counted several times, each from a lower point of the same drop, so the second pull predicted the shift 400 ms early. It now learns once per fall and waits for the revs to climb before it will learn again.
 - **A lock that engaged on the way past.** An early steady-detector compared each sample with the last one, so a slow climb through a note counted as steady. It now needs the whole last second of revs inside an 80 rpm band. The property test feeds it two hundred random samples and checks it never shifts further than the limit and never reports a shift while unlocked.
 
 ## How this was built
@@ -124,5 +129,7 @@ Ideas and pull requests are welcome. If the counter reads a note your engine is 
 ## License
 
 [MIT](LICENSE). Use it, fork it, wire it into your own dashboard.
+
+The fonts are Bricolage Grotesque, Geist and Geist Mono, each under the SIL Open Font License 1.1; their licences are in [docs/licenses](docs/licenses). The OBD-II adapter code, the log format and the demo drive come from my Open Gauge build, also MIT.
 
 Built in Calgary by [Daksh Dua](https://dakshdua.ca).

@@ -10,9 +10,11 @@
 import { type EngineSpec, DEFAULT_ENGINE } from './engine';
 
 /** Engine revs per km/h in each gear, and the push each gear gives at full throttle (m/s²). */
-const RPM_PER_KPH = [100, 58, 40, 30, 24] as const;
-const PUSH = [3.4, 2.4, 1.7, 1.2, 0.85] as const;
+const RPM_PER_KPH = [100, 60, 42, 31, 24] as const;
+const PUSH = [3.4, 2.4, 1.7, 1.3, 0.95] as const;
 const TOP_SPEED_MPS = 62;
+/** Air drag, m/s² per (m/s)²: lets fourth gear reach its shift point before the air wins. */
+const DRAG = 0.00035;
 
 const clamp = (v: number, lo: number, hi: number): number => (Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : lo);
 
@@ -55,7 +57,7 @@ export class CarSim {
     const brk = clamp(brake, 0, 1);
     this.throttle = thr;
 
-    const accel = thr * (PUSH[this.gearIndex] ?? 0.85) - brk * 5 - 0.0009 * this.speed * this.speed - 0.05;
+    const accel = thr * (PUSH[this.gearIndex] ?? 0.95) - brk * 5 - DRAG * this.speed * this.speed - 0.05;
     this.speed = clamp(this.speed + accel * step, 0, TOP_SPEED_MPS);
 
     const kph = this.speed * 3.6;

@@ -42,7 +42,8 @@ describe('mixLanes', () => {
   it('in the city the pump lane is capped at a third', () => {
     const out = mixLanes({ rpm: 4000, throttlePct: 50, place: 'city' });
     expect(out.reason).toBe('city-cap');
-    expect(out.pump).toBeLessThanOrEqual(CITY_PUMP_CAP);
+    expect(out.pump).toBeLessThanOrEqual(0.35); // the number, on purpose: change the rule and this goes red
+    expect(CITY_PUMP_CAP).toBe(0.35);
   });
 
   it('hard throttle in the city is counter-steer: calm lane, volume down', () => {

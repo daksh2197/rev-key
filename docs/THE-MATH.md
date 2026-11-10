@@ -48,15 +48,15 @@ Wrapping is what makes an A at any octave count as the root: a difference of 12,
 | Engine note | Root at 45 | Fifth at 52 | Chosen | Shift |
 | --- | ---: | ---: | --- | ---: |
 | 45 (A2) | 0 | −7 → 5 | root | 0 |
-| 46 (A#2) | +1 | −6 | root | +1 |
+| 46 (A#2) | +1 | +6 | root | +1 |
 | 51 (D#3) | +6 | −1 | fifth | −1 |
 | 52 (E3) | −5 | 0 | fifth | 0 |
 | 48.5 | +3.5 | −3.5 | neither | out of reach |
 
 Then the three rules on top of the arithmetic:
 
-1. **Steady first.** The last `steadyMs` (1,000 ms) of samples must all sit inside `steadyBandRpm` (80 rpm) and above `minRpm` (1,200). A climb through a note never locks.
-2. **Hold through wobble.** Once locked, the lock survives while the revs stay within `releaseBandRpm` (120) of the RPM it engaged at, re-aiming the fine shift at each sample so the drone stays dead on the root.
+1. **Steady first.** The last `steadyMs` (1,000 ms) of samples must all sit inside `steadyBandRpm` (80 rpm), and the current sample must be above `minRpm` (1,200). A climb through a note never locks.
+2. **Hold through wobble.** Once locked, the lock survives while the revs stay within `releaseBandRpm` (120) of the RPM it engaged at, re-aiming the fine shift at each sample so the drone stays dead on the root. If a wobble carries the note a hair past the two-semitone limit, the last shift is kept rather than dropped, so the song never jumps back and forth at the edge.
 3. **Let go cleanly.** Outside that band the lock drops to `waiting`, the shift returns to 0, and the song glides home.
 
 Where: `bestShift`, `KeyLock` in `src/core/keylock.ts`. Tests: every row above, "a pull through the revs never locks", "holds the lock through small wobble, then lets go on a real change", and a property over 200 random samples that the shift never exceeds the limit and is 0 whenever the phase is not `locked`.
@@ -97,7 +97,7 @@ fire a "predicted" event once when 0 < time to go ≤ lead
 
 The app then books the drop `time to go − speaker delay` seconds ahead, snapped to the next eighth note, so it leaves the speaker as the revs fall. Example from the test: 3,000 to 6,000 rpm over 1.5 s is 2,000 rpm/s; with the default shift point at 5,800 and a 250 ms lead, the event fires about 250 ms before 5,800 rpm, which the climb reaches at 1,400 ms.
 
-Two guards: after an event the detector ignores the next `cooldownMs` (900) so one shift cannot fire twice, and a prediction disarms until the revs stop climbing, so a slow climb cannot keep re-predicting. A shift seen during a cooldown is still learned from, so a predicted shift still teaches the detector where the driver shifts.
+Three guards: after an event the detector ignores the next `cooldownMs` (900) so one shift cannot fire twice; a prediction disarms until the revs stop climbing, so a slow climb cannot keep re-predicting; and a fall is learned from once, at its peak, with nothing more learned until the revs climb again, so a drop sampled sixty times a second does not teach sixty shift points. A shift seen during a cooldown is still learned from, so a predicted shift still teaches the detector where the driver shifts.
 
 Where: `ShiftDetector`, `slopeRpmPerSecond`, `median` in `src/core/shift.ts`. Tests: "a 1,000 rpm fall under throttle is an upshift", "the same fall with the foot off is lifting", "with a 250 ms lead it predicts once", "a prediction silences the seen event for that shift, but the shift is still learned", and a property that random samples never produce a NaN or out-of-range event.
 
@@ -118,5 +118,6 @@ Where: `stepsDue` in `src/core/patterns.ts`, used by `Rig.tick` in `src/audio/ri
 ## 6. What is not here
 
 - **Pitch-shifting real recordings.** The two beats are synthesized from the patterns in `patterns.ts`, so changing key is changing one number. A recorded song needs each stem time-stretched and pitch-shifted separately, which is a different and much larger piece of work.
+- **Notes below hearing.** Under 16 Hz (320 rpm on the V6) the screen shows no note name; the arithmetic still runs.
 - **The exact cruise RPM of any car.** The app never guesses it; it reads it, from a slider, a log or the car.
 - **Engine order content.** A real engine's note has strong components at half and twice the firing frequency. The demo's engine sound includes the half order; the lock uses the firing frequency alone, because that is what the ear follows at cruise.
