@@ -6,8 +6,8 @@
 # If a test fails, nothing ships. That is the whole point.
 #
 # While the repo is private, only the tests and the build run. The deploy steps are skipped.
-# The day the repo goes public, set Settings > Pages > Source to "GitHub Actions" and
-# run this workflow once from the Actions tab. From then on every push to main deploys.
+# The day the repo goes public, the next push to main (or a run from the Actions tab) switches
+# Pages on by itself and deploys. From then on every push to main deploys.
 
 name: Test and ship
 
@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pages: read
+      pages: write # lets the Pages step switch Pages on the first time; fork PRs get a read-only token anyway
     steps:
       - uses: actions/checkout@v7
 
@@ -51,6 +51,9 @@ jobs:
         id: pages
         if: github.ref == 'refs/heads/main' && !github.event.repository.private
         uses: actions/configure-pages@v6
+        with:
+          # On a public repo this switches Pages on (source: GitHub Actions) if nobody has yet.
+          enablement: true
 
       - name: Build
         run: npm run build
